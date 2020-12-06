@@ -110,8 +110,6 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
         private final LineChart<Number,Number> lineChart;
         private final Group root = new Group();
         private final  XYChart.Series series = new XYChart.Series();
-        private double xLowerRange = 0;
-        private double yRange = -1;
         private double maxScore = 0.0;
         private int lastScoresLength=0;
         private double minScore = Double.MAX_VALUE;
@@ -119,43 +117,76 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
         private final Spinner<Integer> smoothSpinner;
         private final NumberAxis xAxis = new NumberAxis();
         private final NumberAxis yAxis = new NumberAxis();
+        private final Scene scene;
         private void handleKeyEvent(KeyEvent keyEvent) {
+            if (scores.size()<5) {
+                System.out.println("Returning because scores.size()= " + scores);
+                return;
+            }
             KeyCode code = keyEvent.getCode();
+            lineChart.requestFocus();
             double f = keyEvent.isShiftDown()? 1.5: 1.1;
             switch (code) {
                 case ESCAPE:
-                    xLowerRange = 0;
-                    xAxis.setLowerBound(xLowerRange);
-                    yRange = -1;
+                    xAxis.setAutoRanging(true);
+                    yAxis.setAutoRanging(true);
                     break;
-                case UP:
-                    yRange =  1.1*yRange;
-                    yAxis.setUpperBound(yRange);
+                case UP: // show more
+                    if (!yAxis.isAutoRanging()) {
+                        yAxis.setUpperBound(f * yAxis.getUpperBound());
+                        if (yAxis.getUpperBound() >= 1.1 * maxScore) {
+                            yAxis.setAutoRanging(true);
+                        }
+                    }
                     break;
                 case DOWN:
-                    yRange = yAxis.getUpperBound()/f;
-                    yAxis.setUpperBound(yRange);
+                    if (yAxis.isAutoRanging()) {
+                        yAxis.setAutoRanging(false);
+                        yAxis.setUpperBound(maxScore / f);
+                    } else {
+                        yAxis.setUpperBound(yAxis.getUpperBound() / f);
+                    }
                     break;
-                case LEFT:
-                    xLowerRange = 0; // xLowerRange/f;
-                    xAxis.setLowerBound(xLowerRange);
+                case LEFT: // show more
+                    if (!xAxis.isAutoRanging()) {
+                        double lastTime = scores.get(scores.size() - 1)[0];
+                        double delta = keyEvent.isShiftDown() ? 0.5 * lastTime : 0.1 * lastTime;
+                        double newLowerBound = Math.max(0, xAxis.getLowerBound() - delta);
+                        xAxis.setLowerBound(newLowerBound);
+                        if (newLowerBound == 0) {
+                            xAxis.setAutoRanging(true);
+                        }
+                    }
                     break;
-                case RIGHT:
-                    xLowerRange = xLowerRange + 0.1*(xAxis.getUpperBound()-xLowerRange);
-                    xAxis.setLowerBound(xLowerRange);
+                case RIGHT: { // show less
+                    final double lastTime = scores.get(scores.size() - 1)[0];
+                    if (xAxis.isAutoRanging()) {
+                        final double delta = keyEvent.isShiftDown() ? 0.5 * lastTime : 0.1 * lastTime;
+                        xAxis.setAutoRanging(false);
+                        xAxis.setLowerBound(delta);
+                    } else {
+                        //xLowerRange = xLowerRange + 0.1*(xAxis.getUpperBound()-xLowerRange);
+                        double oldLowerBound = xAxis.getLowerBound();
+                        double showingBound = lastTime - oldLowerBound;
+                        final double delta = keyEvent.isShiftDown() ? 0.5 * showingBound : 0.1 * showingBound;
+                        xAxis.setLowerBound(oldLowerBound + delta);
+                    }
+                }
                     break;
                 case S:
-                    if (keyEvent.isShiftDown()) {
-                        smoothSpinner.increment(10);
-                        smoothSpinner.setVisible(true);
-                    } else if (smoothSpinner.getValue()>0) {
-                        lastScoresLength = 0;
-                        smoothSpinner.decrement(10);
-                    }
+                    smoothSpinner.increment(10);
+                    smoothSpinner.setVisible(true);
                     lastScoresLength = 0;
                     build();
                     break;
+                case U:
+                    if (smoothSpinner.getValue()>0) {
+                        lastScoresLength = 0;
+                        smoothSpinner.decrement(keyEvent.isShiftDown() ? 30: 5);
+                    }
+                    break;
             }
+            lineChart.requestLayout();
         }
         private class ScoresSpinnerValueFactory extends SpinnerValueFactory<Integer> {
             public ScoresSpinnerValueFactory() {
@@ -178,8 +209,8 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
         }
         public ScoresStage() {
             super(StageStyle.DECORATED);
-            setTitle("Scores by time. Use arrow keys to zoom in and out.  S/s to smooth/unsmooth.");
-            Scene scene = new Scene(root, width, height, false);
+            setTitle("Scores by time. Use arrow keys to zoom in and out.  S/s to smooth/unsmooth. ");
+            scene = new Scene(root, width, height, false);
             //imageView.setCache(true);
 
             smoothSpinner = new Spinner<Integer>(new ScoresSpinnerValueFactory());
@@ -189,6 +220,9 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
             smoothSpinner.setTranslateY(20);
             smoothSpinner.setMaxWidth(80);
 
+            smoothSpinner.setOnKeyPressed( keyEvent -> { keyEvent.consume(); handleKeyEvent(keyEvent);  });
+            smoothSpinner.setOnKeyTyped( keyEvent -> { keyEvent.consume();   });
+            smoothSpinner.setFocusTraversable(false);
             smoothLabel.setLabelFor(smoothSpinner);
             smoothLabel.setTranslateX(width-100-65);
             smoothLabel.setTranslateY(23);
@@ -206,8 +240,9 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
             lineChart.setPrefWidth(width);
             lineChart.setPrefHeight(height);
             root.getChildren().addAll(lineChart, smoothLabel, smoothSpinner);
-            xAxis.setAutoRanging(false);
-            yAxis.setAutoRanging(false);
+            xAxis.setAutoRanging(true);
+            yAxis.setAutoRanging(true);
+            yAxis.setForceZeroInRange(false);
             scene.setOnKeyPressed( keyEvent -> {
                 try {
                     handleKeyEvent(keyEvent);
@@ -266,12 +301,6 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
                         series.getData().add(new XYChart.Data(time,score));
                     }
                     lastScoresLength = scoresLocal.size();
-                    yAxis.setLowerBound(minScore/1.1);
-                    yAxis.setUpperBound(yRange < 0 ? 1.1*maxScore: yRange);
-                    double maxTime = scoresLocal.get(lastScoresLength-1)[0];
-                    xAxis.setLowerBound(xLowerRange);
-                    double upperBound = maxTime + 0.1*(maxTime-xLowerRange);
-                    xAxis.setUpperBound(upperBound);
                     root.requestLayout();
                 }});
            // System.out.println("Scores length = " + scores.size());
@@ -625,7 +654,7 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
     }
     @Override
     public void start(Stage stage) throws Exception {
-        stage.setTitle("Up/Down arrows adjust learning rate; Page Up/Down adjust decay factor.");
+        stage.setTitle("Up/Down arrows adjust learning rate; Page Up/Down adjust decay factor. Shift increases adjustment.");
         root = new Group();
         Scene scene = new Scene(root, WIDTH, HEIGHT, false);
         makeTexts();
