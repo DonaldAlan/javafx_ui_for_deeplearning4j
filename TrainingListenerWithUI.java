@@ -173,17 +173,27 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
                     }
                 }
                     break;
-                case S:
-                    smoothSpinner.increment(10);
-                    smoothSpinner.setVisible(true);
+                case S: { // make smoother. Increase spinner
+                    int delta = keyEvent.isShiftDown() ? 10 : 1;
+                    int newValue = delta + smoothSpinner.getValue();
+                    if (newValue> scores.size()/2) {
+                        newValue = scores.size()/2;
+                    }
+                    smoothSpinner.getValueFactory().setValue(newValue);
                     lastScoresLength = 0;
                     build();
+                }
                     break;
-                case U:
-                    if (smoothSpinner.getValue()>0) {
-                        lastScoresLength = 0;
-                        smoothSpinner.decrement(keyEvent.isShiftDown() ? 30: 5);
+                case U: {
+                    int delta = keyEvent.isShiftDown() ? -10 : -1;
+                    int newValue = delta + smoothSpinner.getValue();
+                    if (newValue<0) {
+                        newValue = 0;
                     }
+                    smoothSpinner.getValueFactory().setValue(newValue);
+                    lastScoresLength = 0;
+                    build();
+                }
                     break;
             }
             lineChart.requestLayout();
@@ -209,7 +219,7 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
         }
         public ScoresStage() {
             super(StageStyle.DECORATED);
-            setTitle("Scores by time. Use arrow keys to zoom in and out.  S/s to smooth/unsmooth. ");
+            setTitle("Scores by time. Arrow keys zoom in and out.  s/u smooth/unsmooth. Shift increases adjustment.");
             scene = new Scene(root, width, height, false);
             //imageView.setCache(true);
 
