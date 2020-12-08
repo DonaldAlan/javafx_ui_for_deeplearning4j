@@ -311,6 +311,11 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
                         series.getData().add(new XYChart.Data(time,score));
                     }
                     lastScoresLength = scoresLocal.size();
+                    if (!xAxis.isAutoRanging()) {
+                        double lastTime = scoresLocal.get(scoresLocal.size()-1)[0];
+                        double range = lastTime - xAxis.getLowerBound();
+                        xAxis.setUpperBound( lastTime + 0.1 * range);
+                    }
                     root.requestLayout();
                 }});
            // System.out.println("Scores length = " + scores.size());
