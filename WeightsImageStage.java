@@ -42,9 +42,9 @@ public class WeightsImageStage extends Stage {
     private final XformCamera cameraXform = new XformCamera();
     private static final double CAMERA_NEAR_CLIP = 0.1;
     private static final double CAMERA_FAR_CLIP = 20000.0;
-    private static double cameraInitialX = 600;
+    private static double cameraInitialX = 100;
     private static double cameraInitialY = 930;
-    private double cameraInitialZ = -2500;
+    private double cameraInitialZ = -4000;
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
     private ImageView selectedImageView = null;
     // -------------------------

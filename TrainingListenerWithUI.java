@@ -51,7 +51,7 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
     private final NumberFormat numberFormat7 = NumberFormat.getInstance();
     private final NumberFormat numberFormatForMinus = new DecimalFormat(" 0.00;-0.00");
     private long countOfForwardPasses = 0;
-
+    private long lastWeightImageUpdate = 0;
     private static final int WIDTH = 700;
     private static final int HEIGHT = 300;
     private Group root;
@@ -565,8 +565,9 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
                         weightsImageStage = new WeightsImageStage(net);
                         weightsImageStage.show();
                     }
-                    if (countScores%10 == 1) {
+                    if (now - lastWeightImageUpdate > 15000) {
                         weightsImageStage.buildImages();
+                        lastWeightImageUpdate = now;
                     }
                 }
             });
