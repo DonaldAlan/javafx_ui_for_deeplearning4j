@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Random;
 
 /**LSTM Character modelling example
@@ -102,6 +103,13 @@ public class GenerateTxtModelWithJavaFXUI {
 
 		MultiLayerNetwork net = new MultiLayerNetwork(conf);
 		net.init();
+		for(int i=0;i<net.getnLayers();i++) {
+            Map<String, INDArray> map = net.getLayer(i).paramTable();
+            System.out.println(i + ":" + map.keySet());
+            for (INDArray weights : map.values()) {
+                System.out.println("   " + weights.shapeInfoToString());
+            }
+        }
 		net.setListeners(trainingListenerWithUI, new StatsListener(statsStorage)); // das
 
 		//Print the  number of parameters in the network (and for each layer)

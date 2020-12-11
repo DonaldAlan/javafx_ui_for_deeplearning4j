@@ -89,6 +89,7 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
     private Label runtimeLabelLabel;
     private Label runtimeLabel;
     private ScoresStage scoresStage;
+    private WeightsImageStage weightsImageStage = null;
 
     //----------------------------------------------------------------
     public TrainingListenerWithUI() {
@@ -371,7 +372,7 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
             @Override
             public void run() {
                 numberOfParametersLabel.setText(""+model.numParams());
-                learningRateLabel.setText(numberFormat7.format(((MultiLayerNetwork) model).getLearningRate(1)));
+                learningRateLabel.setText(numberFormat7.format(UILinkedLearningSchedule.learningRate));
             }
         });
     }
@@ -473,15 +474,20 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
     private void showWeights(MultiLayerNetwork net, StringBuilder sb) {
         for(int i=0;i<net.getnLayers();i++) {
             final Layer layer = net.getLayer(i);
-            double varianceParams = getVariance(layer.params());
-            double stdParams = Math.sqrt(varianceParams);
-            sb.append(i + ": " + numberFormat2.format(stdParams) + "\n");
+            if (layer.params()!=null) {
+                double varianceParams = getVariance(layer.params());
+                double stdParams = Math.sqrt(varianceParams);
+                sb.append(i + ": " + numberFormat2.format(stdParams) + "\n");
+            }
         }
     }
     private void buildGradientsText(StringBuilder sbGradients, MultiLayerNetwork net) {
         for(int i=0;i<net.getnLayers();i++) {
             final Layer layer = net.getLayer(i);
             INDArray gradients = layer.getGradientsViewArray();
+            if (gradients==null) {
+                continue;
+            }
             double[] meanAndStd = {0, 0};
             calculateMeanAndStd(meanAndStd,gradients);
             double meanOfGradients = meanAndStd[0];
@@ -551,6 +557,16 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
                     weightsText.setText(weightTextStringBuilder.toString());
                     if (sbRatios.length()>0) {
                         ratioText.setText(sbRatios.toString());
+                    }
+
+
+                    if (weightsImageStage == null) {
+                        MultiLayerNetwork net = (MultiLayerNetwork) model;
+                        weightsImageStage = new WeightsImageStage(net);
+                        weightsImageStage.show();
+                    }
+                    if (countScores%10 == 1) {
+                        weightsImageStage.buildImages();
                     }
                 }
             });
