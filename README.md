@@ -13,6 +13,7 @@ A separate window shows an image of weights (params) per layer in 3D, via Weight
 
 ![Screenshot](./WeightsExample1.jpg "Weights Example 1")
 ![Screenshot](./WeightsExample2.jpg "Weights Example 2")
+![Screenshot](./WeightsExample3.jpg "Weights Example 3")
 
 It uses StatsStorage to get the ratios of updates to parameters. 
 
