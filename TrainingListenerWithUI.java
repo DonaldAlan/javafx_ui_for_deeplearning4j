@@ -44,6 +44,9 @@ import java.util.Map;
  * Linked with UILinkedLearningSchedule
  */
 public class TrainingListenerWithUI extends Application implements TrainingListener {
+    private final int minimumSecondsBetweenWeightStageUpdates = 15;
+    private static final int WIDTH = 700;
+    private static final int HEIGHT = 300;
     private final NumberFormat numberFormat1 = NumberFormat.getInstance();
     private final NumberFormat numberFormat2 = NumberFormat.getInstance();
     private final NumberFormat numberFormat3 = NumberFormat.getInstance();
@@ -52,8 +55,7 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
     private final NumberFormat numberFormatForMinus = new DecimalFormat(" 0.00;-0.00");
     private long countOfForwardPasses = 0;
     private long lastWeightImageUpdate = 0;
-    private static final int WIDTH = 700;
-    private static final int HEIGHT = 300;
+
     private Group root;
     private Label epochLabel;
     private Label epochLabelLabel;
@@ -128,6 +130,8 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
             lineChart.requestFocus();
             double f = keyEvent.isShiftDown()? 1.5: 1.1;
             switch (code) {
+                case Q:
+                    System.exit(0);
                 case ESCAPE:
                     xAxis.setAutoRanging(true);
                     yAxis.setAutoRanging(true);
@@ -565,7 +569,7 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
                         weightsImageStage = new WeightsImageStage(net);
                         weightsImageStage.show();
                     }
-                    if (now - lastWeightImageUpdate > 15000) {
+                    if (now - lastWeightImageUpdate > minimumSecondsBetweenWeightStageUpdates*1000) {
                         weightsImageStage.buildImages();
                         lastWeightImageUpdate = now;
                     }
@@ -633,8 +637,8 @@ public class TrainingListenerWithUI extends Application implements TrainingListe
         weightsLabel = new MyLabel(590, y+40, "Weights std");
         weightsText = new Text(590, y+40+yOffset,"");
 
-        runtimeLabelLabel = new MyLabel(545,10,"Runtime in secs:");
-        runtimeLabel = new MyLabel(545,30);
+        runtimeLabelLabel = new MyLabel(555,10,"Runtime in secs:");
+        runtimeLabel = new MyLabel(555,30);
 
         Tooltip tooltipDecay = new Tooltip("Learning rate decay factor.\nUse Up/Down arrows to change this.");
         tooltipDecay.setShowDelay(Duration.seconds(1));
